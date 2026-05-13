@@ -24,6 +24,12 @@ class MinimalPublisher(Node):
         msg.data = 'Hello from Diploma Project'
         self.publisher_.publish(msg)
 
+    def process_data(self, data):
+        """Обробляє вхідні дані та повертає рядок."""
+        if data is None:
+            raise ValueError('Вхідні дані не можуть бути None')
+        return str(data)
+
 
 def main(args=None):
     """Головна функція запуску тестового видавця."""
