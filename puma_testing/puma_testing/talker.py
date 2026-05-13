@@ -1,4 +1,9 @@
-"""Модуль тестового вузла MinimalPublisher для верифікації ROS 2."""
+"""
+Модуль тестового вузла MinimalPublisher для верифікації ROS 2.
+
+Цей модуль містить базову реалізацію вузла-видавця.
+"""
+
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import String
