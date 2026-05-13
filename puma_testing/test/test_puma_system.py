@@ -22,14 +22,14 @@ puma_only = pytest.mark.skipif(
 
 @puma_only
 def test_urdf_file_exists():
-    """Перевіряє наявність файлу опису робота URDF/Xacro."""
+    """1 Перевіряє наявність файлу опису робота URDF/Xacro."""
     xacro_file = os.path.join(PKG, 'urdf', 'puma560_robot.urdf.xacro')
     assert os.path.exists(xacro_file), f'URDF файл не знайдено: {xacro_file}'
 
 
 @puma_only
 def test_urdf_generates_without_errors():
-    """Перевіряє що xacro генерує валідний URDF без помилок."""
+    """2 Перевіряє що xacro генерує валідний URDF без помилок."""
     xacro_file = os.path.join(PKG, 'urdf', 'puma560_robot.urdf.xacro')
     result = subprocess.run(
         ['xacro', xacro_file],
@@ -45,7 +45,7 @@ def test_urdf_generates_without_errors():
 
 @puma_only
 def test_urdf_contains_seven_joints():
-    """Перевіряє що маніпулятор має 7 joints (6 рухомих + 1 базовий)."""
+    """3 Перевіряє що маніпулятор має 7 joints (6 рухомих + 1 базовий)."""
     xacro_file = os.path.join(PKG, 'urdf', 'puma560_robot.urdf.xacro')
     result = subprocess.run(
         ['xacro', xacro_file],
@@ -61,7 +61,7 @@ def test_urdf_contains_seven_joints():
 
 @puma_only
 def test_urdf_contains_links():
-    """Перевіряє що URDF містить ланки маніпулятора."""
+    """4 Перевіряє що URDF містить ланки маніпулятора."""
     xacro_file = os.path.join(PKG, 'urdf', 'puma560_robot.urdf.xacro')
     result = subprocess.run(
         ['xacro', xacro_file],
@@ -74,7 +74,7 @@ def test_urdf_contains_links():
 
 @puma_only
 def test_launch_file_exists():
-    """Перевіряє наявність launch файлу для запуску системи."""
+    """5 Перевіряє наявність launch файлу для запуску системи."""
     launch_file = os.path.join(PKG, 'launch', 'display_puma560.xml')
     assert os.path.exists(launch_file), (
         f'Launch файл не знайдено: {launch_file}'
@@ -83,7 +83,7 @@ def test_launch_file_exists():
 
 @puma_only
 def test_rviz_config_exists():
-    """Перевіряє наявність конфігурації візуалізації RViz2."""
+    """6 Перевіряє наявність конфігурації візуалізації RViz2."""
     rviz_config = os.path.join(PKG, 'config', 'puma560.rviz')
     assert os.path.exists(rviz_config), (
         f'Конфігурацію RViz2 не знайдено: {rviz_config}'
@@ -92,7 +92,7 @@ def test_rviz_config_exists():
 
 @puma_only
 def test_all_mesh_files_exist():
-    """Перевіряє наявність всіх mesh-файлів геометрії маніпулятора."""
+    """7 Перевіряє наявність всіх mesh-файлів геометрії маніпулятора."""
     meshes_dir = os.path.join(PKG, 'meshes')
     expected_meshes = [f'puma_link{i}.stl' for i in range(1, 8)]
     missing = []
@@ -103,7 +103,7 @@ def test_all_mesh_files_exist():
 
 
 def test_joint_state_message_has_six_joints():
-    """Перевіряє що повідомлення JointState містить дані про 6 суглобів."""
+    """8 Перевіряє що повідомлення JointState містить дані про 6 суглобів."""
     msg = JointState()
     msg.name = ['j1', 'j2', 'j3', 'j4', 'j5', 'j6']
     msg.position = [0.0] * 6
@@ -121,19 +121,20 @@ def test_joint_state_message_has_six_joints():
 
 
 def test_joint_state_positions_in_valid_range():
-    """Перевіряє що позиції суглобів знаходяться в допустимому діапазоні."""
+    """9 Перевіряє що позиції суглобів знаходяться в допустимому діапазоні."""
     msg = JointState()
     msg.name = ['j1', 'j2', 'j3', 'j4', 'j5', 'j6']
     msg.position = [0.0, -1.5, 1.5, 0.0, 0.0, 0.0]
     for i, pos in enumerate(msg.position):
         assert abs(pos) <= math.pi * 2, (
-            f'Суглоб {msg.name[i]}: позиція {pos} виходить за допустимий діапазон'
+            f'Суглоб {msg.name[i]}: позиція {
+                pos} виходить за допустимий діапазон'
         )
 
 
 @pytest.mark.parametrize('joint_name', ['j1', 'j2', 'j3', 'j4', 'j5', 'j6'])
 def test_each_joint_name_is_valid(joint_name):
-    """Перевіряє що кожен суглоб має коректне ім'я."""
+    """10 Перевіряє що кожен суглоб має коректне ім'я."""
     assert joint_name.startswith('j'), (
         f"Некоректне ім'я суглоба: {joint_name}"
     )
