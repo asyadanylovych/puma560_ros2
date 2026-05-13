@@ -134,7 +134,7 @@ def test_joint_state_positions_in_valid_range():
 
 @pytest.mark.parametrize('joint_name', ['j1', 'j2', 'j3', 'j4', 'j5', 'j6'])
 def test_each_joint_name_is_valid(joint_name):
-    """10 Перевіряє що кожен суглоб має коректне ім'я."""
+    """10Перевіряє що кожен суглоб має коректне ім'я."""
     assert joint_name.startswith('j'), (
         f"Некоректне ім'я суглоба: {joint_name}"
     )

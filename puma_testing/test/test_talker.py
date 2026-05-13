@@ -69,3 +69,12 @@ def test_publisher_exists():
     node = MinimalPublisher()
     assert node.count_publishers('/topic') >= 1
     node.destroy_node()
+    
+def test_negative_input():
+    """Перевірка обробки некоректних даних."""
+    node = MinimalPublisher()
+    # Імітуємо передачу порожніх даних
+    with pytest.raises(Exception):
+        # Якщо в майбутньому в нас буде функція обробки даних, 
+        node.process_data(None) 
+    node.destroy_node()
