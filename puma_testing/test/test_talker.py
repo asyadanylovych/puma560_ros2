@@ -1,51 +1,128 @@
-"""Юніт-тести для вузла MinimalPublisher."""
-from puma_testing.talker import MinimalPublisher
+"""Юніт-тести для вузла MinimalPublisher.
+
+Модуль реалізує набір ізольованих юніт-тестів для верифікації
+коректності функціонування вузла-видавця ROS 2 відповідно до
+методики модульного тестування на базі фреймворку pytest.
+"""
 import pytest
 import rclpy
 from std_msgs.msg import String
 
+from puma_testing.talker import MinimalPublisher
+
 
 @pytest.fixture(scope='module', autouse=True)
 def init_rclpy():
-    """Ініціалізує rclpy один раз для всіх тестів модуля."""
+    """Ініціалізує середовище rclpy один раз для всього модуля.
+
+    Використання scope='module' гарантує що rclpy.init() та
+    rclpy.shutdown() викликаються рівно по одному разу — це
+    критично важливо, оскільки повторна ініціалізація без
+    завершення роботи призводить до помилки середовища виконання.
+    Ключове слово yield розділяє setup та teardown фази.
+    """
     rclpy.init()
-    yield
+    yield  # тут виконуються всі тести модуля
     rclpy.shutdown()
 
 
 def test_node_creation():
-    """Вузол успішно створюється."""
+    """Верифікує успішне створення екземпляру вузла.
+
+    Перевіряє що конструктор MinimalPublisher завершується без
+    винятків та повертає валідний об'єкт вузла. Це базова
+    передумова для всіх інших тестів — якщо вузол не створюється,
+    подальше тестування не має сенсу.
+    """
     node = MinimalPublisher()
+
+    # вузол повинен бути валідним об'єктом, а не None
     assert node is not None
+
+    # коректне звільнення ресурсів після тесту
     node.destroy_node()
 
 
 def test_node_name():
-    """Вузол має правильне ім'я 'minimal_publisher'."""
+    """Верифікує що вузол реєструється в системі ROS 2 під коректним іменем.
+
+    Ім'я вузла є унікальним ідентифікатором у графі ROS 2.
+    Некоректне ім'я може призвести до конфліктів при взаємодії
+    з іншими вузлами системи або інструментами моніторингу (rqt, ros2 node list).
+    """
     node = MinimalPublisher()
+
+    # get_name() повертає ім'я з яким вузол зареєстрований у ROS 2
     assert node.get_name() == 'minimal_publisher'
+
     node.destroy_node()
 
 
 def test_send_hello_no_exception():
-    """Метод send_hello() виконується без винятків."""
+    """Верифікує що публікація повідомлення не генерує виняткових ситуацій.
+
+    Тест перевіряє стабільність методу send_hello() при виклику
+    в умовах ініціалізованого середовища rclpy. Використання
+    конструкції try/except дозволяє перехопити будь-який тип
+    винятку та надати інформативне повідомлення про збій.
+    """
     node = MinimalPublisher()
+
     try:
         node.send_hello()
     except Exception as e:
+        # pytest.fail() явно провалює тест з описом причини
         pytest.fail(f'send_hello() викинув виняток: {e}')
+
     node.destroy_node()
 
 
 def test_message_content():
-    """Повідомлення містить очікуваний текст."""
-    msg = String()
-    msg.data = 'Hello from Diploma Project'
-    assert msg.data == 'Hello from Diploma Project'
+    """Верифікує що вузол публікує повідомлення з коректним вмістом.
+
+    На відміну від простої перевірки рядка, цей тест реалізує
+    повний цикл передачі даних: вузол публікує повідомлення у топік,
+    підписник його отримує, після чого перевіряється відповідність
+    вмісту очікуваному значенню. Це забезпечує верифікацію реальної
+    поведінки системи обміну повідомленнями ROS 2.
+    """
+    node = MinimalPublisher()
+
+    # буфер для збереження отриманих повідомлень
+    received = []
+
+    # динамічно створюємо підписника на той самий топік що і видавець
+    node.create_subscription(
+        String,
+        'topic',
+        lambda msg: received.append(msg.data),  # callback зберігає дані
+        10  # розмір черги QoS
+    )
+
+    # публікуємо повідомлення через тестований метод
+    node.send_hello()
+
+    # spin_once обробляє одну ітерацію event loop —
+    # це необхідно щоб callback підписника встиг виконатись
+    rclpy.spin_once(node, timeout_sec=1.0)
+
+    assert len(received) > 0, 'Повідомлення не отримано з топіку'
+    assert received[0] == 'Hello from Diploma Project'
+
+    node.destroy_node()
 
 
 def test_publisher_exists():
-    """Вузол має видавця у топіку."""
+    """Верифікує наявність активного видавця у топіку /topic.
+
+    Метод count_publishers() повертає кількість видавців
+    зареєстрованих у вказаному топіку на момент виклику.
+    Значення >= 1 підтверджує що видавець був успішно
+    створений під час ініціалізації вузла в методі __init__.
+    """
     node = MinimalPublisher()
-    assert node.count_publishers('/topic') >= 0
+
+    # перевіряємо що хоча б один видавець існує у топіку
+    assert node.count_publishers('/topic') >= 1
+
     node.destroy_node()
